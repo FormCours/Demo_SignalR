@@ -1,0 +1,43 @@
+﻿@page
+@model IndexModel
+@{
+	ViewData["Title"] = "Home page";
+}
+
+
+<form id="formChat">
+	<input id="inputUser" />
+	<input id="inputMsg" />
+	<input type="submit" value="Envoyer" />
+</form>
+<ul id="messages">
+</ul>
+
+<script src="~/lib/microsoft-signalr/signalr.js"></script>
+<script>
+	const connection = new signalR.HubConnectionBuilder()
+		.configureLogging(signalR.LogLevel.Trace)
+		.withAutomaticReconnect()
+		.withUrl('/chathub').build();
+
+	connection.start().then(() => {
+
+		connection.on("RecevoirMessage", (username, message) => {
+			// Déclancher par le serveur
+			const ul = document.querySelector('#messages');
+			const liMsg = document.createElement('li');
+			liMsg.innerText = `${username} - ${message}`;
+			ul.appendChild(liMsg);
+		})
+
+		const form = document.querySelector('#formChat');
+		form.addEventListener('submit', (e) => {
+			e.preventDefault();
+
+			const username = document.querySelector('#inputUser').value;
+			const message = document.querySelector('#inputMsg').value;
+
+			connection.invoke("EnvoyerMessage", username, message);
+		});
+	})
+</script>
